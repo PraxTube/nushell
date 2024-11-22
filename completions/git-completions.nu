@@ -65,6 +65,18 @@ def "nu-complete git checkout" [] {
   | append (nu-complete git files | where description != "Untracked" | select value)
 }
 
+def "nu-complete git merge" [] {
+  (nu-complete git local branches)
+  | parse "{value}"
+  | insert description "local branch"
+  | append (nu-complete git remote branches nonlocal without prefix
+            | parse "{value}"
+            | insert description "remote branch")
+  | append (nu-complete git remote branches with prefix
+            | parse "{value}"
+            | insert description "remote branch")
+}
+
 # Arguments to `git rebase --onto <arg1> <arg2>`
 def "nu-complete git rebase" [] {
   (nu-complete git local branches)
@@ -87,23 +99,37 @@ def "nu-complete git tags" [] {
 # See `man git-status` under "Short Format"
 # This is incomplete, but should cover the most common cases.
 const short_status_descriptions = {
-  " D": "Deleted"
-  " M": "Modified"
-  "!!": "Ignored"
-  "??": "Untracked"
+  ".D": "Deleted"
+  ".M": "Modified"
+  "!" : "Ignored"
+  "?" : "Untracked"
   "AU": "Staged, not merged"
   "MD": "Some modifications staged, file deleted in work tree"
   "MM": "Some modifications staged, some modifications untracked"
-  "R ": "Renamed"
+  "R.": "Renamed"
+  "UU": "Both modified (in merge conflict)"
 }
 
 def "nu-complete git files" [] {
-  let relevant_statuses = ["??"," M", "MM", "MD", " D"]
-  ^git status --porcelain
-    | lines
-      | parse --regex "(?P<short_status>.{2}) (?P<value>.+)"
-      | where $it.short_status in $relevant_statuses
-      | insert "description" { |e| $short_status_descriptions | get $e.short_status}
+  let relevant_statuses = ["?",".M", "MM", "MD", ".D", "UU"]
+  ^git status -uall --porcelain=2
+  | lines
+  | each { |$it|
+    if $it starts-with "1 " {
+      $it | parse --regex "1 (?P<short_status>\\S+) (?:\\S+\\s?){6} (?P<value>\\S+)"
+    } else if $it starts-with "2 " {
+      $it | parse --regex "2 (?P<short_status>\\S+) (?:\\S+\\s?){6} (?P<value>\\S+)"
+    } else if $it starts-with "u " {
+      $it | parse --regex "u (?P<short_status>\\S+) (?:\\S+\\s?){8} (?P<value>\\S+)"
+    } else if $it starts-with "? " {
+      $it | parse --regex "(?P<short_status>.{1}) (?P<value>.+)"
+    } else {
+      { short_status: 'unknown', value: $it }
+    }
+  }
+  | flatten
+  | where $it.short_status in $relevant_statuses
+  | insert "description" { |e| $short_status_descriptions | get $e.short_status}
 }
 
 def "nu-complete git built-in-refs" [] {
@@ -159,6 +185,12 @@ export extern "git checkout" [
   -b                                              # create and checkout a new branch
   -B: string                                      # create/reset and checkout a branch
   -l                                              # create reflog for new branch
+]
+
+export extern "git merge" [
+  ...targets: string@"nu-complete git merge"   # name of the branch to merge
+  --abort
+  --continue
 ]
 
 # Download objects and refs from another repository
@@ -423,13 +455,13 @@ export extern "git stash list" [
 
 # Show a stashed change
 export extern "git stash show" [
-  stash: string@"nu-complete git stash-list"
+  stash?: string@"nu-complete git stash-list"
   -U                                                  # show diff
 ]
 
 # Drop a stashed change
 export extern "git stash drop" [
-  stash: string@"nu-complete git stash-list"
+  stash?: string@"nu-complete git stash-list"
 ]
 
 # Create a new git repository
@@ -475,4 +507,71 @@ export extern "git bisect reset" [
 # Show help for a git subcommand
 export extern "git help" [
   command: string@"nu-complete git subcommands"       # subcommand to show help for
+]
+
+# git worktree
+export extern "git worktree" [
+  --help(-h)            # display the help message for this command
+  ...args
+]
+
+# create a new working tree
+export extern "git worktree add" [
+  --help(-h)            # display the help message for this command
+  --force(-f)           # checkout <branch> even if already checked out in other worktree
+  -b                    # create a new branch
+  -B                    # create or reset a branch
+  --detach(-d)          # detach HEAD at named commit
+  --checkout            # populate the new working tree
+  --lock                # keep the new working tree locked
+  --reason              # reason for locking
+  --quiet(-q)           # suppress progress reporting
+  --track               # set up tracking mode (see git-branch(1))
+  --guess-remote        # try to match the new branch name with a remote-tracking branch
+  ...args
+]
+
+# list details of each worktree
+export extern "git worktree list" [
+  --help(-h)            # display the help message for this command
+  --porcelain           # machine-readable output
+  --verbose(-v)         # show extended annotations and reasons, if available
+  --expire              # add 'prunable' annotation to worktrees older than <time>
+  -z                    # terminate records with a NUL character
+  ...args
+]
+
+# prevent a working tree from being pruned
+export extern "git worktree lock" [
+  --help(-h)            # display the help message for this command
+  --reason              # reason for locking
+  ...args
+]
+
+# move a working tree to a new location
+export extern "git worktree move" [
+  --help(-h)            # display the help message for this command
+  --force(-f)           # force move even if worktree is dirty or locked
+  ...args
+]
+
+# prune working tree information
+export extern "git worktree prune" [
+  --help(-h)            # display the help message for this command
+  --dry-run(-n)         # do not remove, show only
+  --verbose(-v)         # report pruned working trees
+  --expire              # expire working trees older than <time>
+  ...args
+]
+
+# remove a working tree
+export extern "git worktree remove" [
+  --help(-h)            # display the help message for this command
+  --force(-f)           # force removal even if worktree is dirty or locked
+  ...args
+]
+
+# allow working tree to be pruned, moved or deleted
+export extern "git worktree unlock" [
+  ...args
 ]
