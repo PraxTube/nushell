@@ -14,13 +14,11 @@ alias ndays = ~/Downloads/ndays
 alias setclip = xclip -selection clipboard
 alias ldtk = ~/Downloads/persistent/ldtk.AppImage
 
-alias matlab = ~/code/matlab/_installation/installation/bin/matlab -nodisplay -nodesktop -r
-
 def ffcut [input, start, duration, output] {
   ffmpeg -ss $start -i $input -t $duration -c:v libx264 -c:a copy $output
 }
 
-$env.PATH = ($env.PATH | split row (char esep) | append "~/.local/bin" | append "~/go/bin" | append "~/work/blender/blender-3.4.1")
+$env.PATH = ($env.PATH | split row (char esep) | append "~/.local/bin" | append "~/go/bin" | append "~/work/blender/blender-3.4.1" | append "~/code/odin/odin-linux-amd64-nightly+2025-08-05/")
 
 # For more information on defining custom themes, see
 # https://www.nushell.sh/book/coloring_and_theming.html
