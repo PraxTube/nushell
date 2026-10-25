@@ -9,16 +9,19 @@ alias cat = bat
 alias du = dust
 alias top = btm
 alias grep = rg
+alias b = ./build.sh
+alias r = ./run.sh
 
-alias ndays = ~/Downloads/ndays
 alias setclip = xclip -selection clipboard
 alias ldtk = ~/Downloads/persistent/ldtk.AppImage
+alias heroic = ~/Downloads/persistent/Heroic-2.21.0-linux-x86_64.AppImage
+alias aseprite = ~/Downloads/persistent/aseprite/build/bin/aseprite
 
 def ffcut [input, start, duration, output] {
   ffmpeg -ss $start -i $input -t $duration -c:v libx264 -c:a copy $output
 }
 
-$env.PATH = ($env.PATH | split row (char esep) | append "~/.local/bin" | append "~/go/bin" | append "~/work/blender/blender-3.4.1" | append "~/code/odin/odin-linux-amd64-nightly+2025-08-05/")
+$env.PATH = ($env.PATH | split row (char esep) | append "~/.local/bin" | append "~/go/bin" | append "~/code/work/blender/blender-3.4.1" | append "~/code/odin/odin-linux-amd64-nightly+2026-06-08/")
 
 # For more information on defining custom themes, see
 # https://www.nushell.sh/book/coloring_and_theming.html
