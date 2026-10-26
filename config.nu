@@ -21,7 +21,7 @@ def ffcut [input, start, duration, output] {
   ffmpeg -ss $start -i $input -t $duration -c:v libx264 -c:a copy $output
 }
 
-$env.PATH = ($env.PATH | split row (char esep) | append "~/.local/bin" | append "~/go/bin" | append "~/code/work/blender/blender-3.4.1" | append "~/code/odin/odin-linux-amd64-nightly+2026-06-08/")
+$env.PATH = ($env.PATH | split row (char esep) | append "~/.local/bin" | append "~/go/bin" | append "~/code/work/blender/blender-3.4.1" | append "~/code/odin/odin-linux-amd64-nightly+2026-10-06/")
 
 # For more information on defining custom themes, see
 # https://www.nushell.sh/book/coloring_and_theming.html
